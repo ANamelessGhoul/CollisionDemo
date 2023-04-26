@@ -9,7 +9,7 @@
 
 class World
 {
-private:
+protected:
     unsigned long long objectCount;
     std::vector<Vector2> positions;
     std::vector<Vector2> velocities;
@@ -18,14 +18,13 @@ private:
     const float WORLD_SIZE = { 5000.0f };
     const unsigned long long DESIRED_COUNT = {100000ull};
 
-    void CreateRandomPoint();
+    virtual void CreateRandomPoint();
 public:
-    void DrawPoints();
-    void UpdatePoints();
+    virtual void DrawPoints();
+    virtual void UpdatePoints();
     virtual void OnPointMoved(int pointIndex, Vector2 displacement);
     World(/* args */);
-    ~World();
+    virtual ~World();
 };
-
 
 #endif // WORLD_H

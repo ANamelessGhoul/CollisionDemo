@@ -9,7 +9,6 @@ World::World(/* args */)
     {
         CreateRandomPoint();
     }
-    
 }
 
 World::~World()
@@ -63,4 +62,3 @@ void World::OnPointMoved(int index, Vector2 displacement)
 {
 
 }
-
