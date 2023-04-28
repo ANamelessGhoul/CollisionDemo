@@ -1,5 +1,10 @@
 #include "world.h"
 
+Rectangle GetCircleBounds(Vector2 position, float radius)
+{
+    return {position.x - radius, position.y - radius, radius * 2, radius * 2};
+}
+
 World::World(/* args */)
 {
     objectCount = 0;
@@ -26,22 +31,29 @@ void World::CreateRandomPoint()
 void World::DrawPoints()
 {
     auto screenRect = Rectangle{0, 0, 800, 450};
-    for (size_t i = 0; i < objectCount; i++)
+    screenCollisionsBuffer.clear();
+    CheckCollision(screenRect, screenCollisionsBuffer);
+    for (size_t i : screenCollisionsBuffer)
     {
-        if (!CheckCollisionCircleRec(positions[i], radiuses[i], screenRect))
-            continue;
-
+        collisionsBuffer.clear();
+        Rectangle bounds = {positions[i].x - radiuses[i], positions[i].y - radiuses[i], radiuses[i] * 2, radiuses[i] * 2};
+        CheckCollision(bounds, collisionsBuffer);
+        
         bool hasCollision = false;
-        // for(size_t j = 0; j < objectCount; j++)
-        // {
-        //     if (j == i)
-        //         continue;
-        //     if (CheckCollisionCircles(positions[i], radiuses[i], positions[j], radiuses[j]))
-        //     {
-        //         hasCollision = true;
-        //         break;
-        //     }
-        // }
+        for (size_t index : collisionsBuffer)
+        {
+            // Ignore self collisions
+            if (index == i)
+                continue;
+            
+            // Do precise collision
+            if (!CheckCollisionCircles(positions[i], radiuses[i], positions[index], radiuses[index]))
+                continue;
+
+            hasCollision = true;
+            break;
+        }
+        
 
         DrawCircleV(positions[i], radiuses[i], hasCollision ? RED : BLACK);
     }  
@@ -61,4 +73,15 @@ void World::UpdatePoints()
 void World::OnPointMoved(size_t index, Vector2 displacement)
 {
 
+}
+
+void World::CheckCollision(Rectangle bounds, std::vector<size_t>& buffer)
+{
+    for(size_t i = 0; i < objectCount; i++)
+    {
+        if(CheckCollisionCircleRec(positions[i], radiuses[i], bounds))
+        {
+            buffer.emplace_back(i);
+        }
+    }
 }
