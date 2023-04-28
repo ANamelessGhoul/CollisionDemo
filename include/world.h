@@ -9,6 +9,9 @@
 
 class World
 {
+private:
+    void CreateRandomPoint();
+    
 protected:
     unsigned long long objectCount;
     std::vector<Vector2> positions;
@@ -18,10 +21,9 @@ protected:
     const float WORLD_SIZE = { 5000.0f };
     const unsigned long long DESIRED_COUNT = {100000ull};
 
-    virtual void CreateRandomPoint();
 public:
-    virtual void DrawPoints();
-    virtual void UpdatePoints();
+    void DrawPoints();
+    void UpdatePoints();
     virtual void OnPointMoved(int pointIndex, Vector2 displacement);
     World(/* args */);
     virtual ~World();
