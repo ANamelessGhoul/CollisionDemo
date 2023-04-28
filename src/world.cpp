@@ -58,7 +58,7 @@ void World::UpdatePoints()
     }  
 }
 
-void World::OnPointMoved(int index, Vector2 displacement)
+void World::OnPointMoved(size_t index, Vector2 displacement)
 {
 
 }

@@ -24,7 +24,7 @@ protected:
 public:
     void DrawPoints();
     void UpdatePoints();
-    virtual void OnPointMoved(int pointIndex, Vector2 displacement);
+    virtual void OnPointMoved(size_t pointIndex, Vector2 displacement);
     World(/* args */);
     virtual ~World();
 };
