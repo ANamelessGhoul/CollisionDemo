@@ -30,7 +30,7 @@ public:
     void DrawPoints();
     void UpdatePoints();
     virtual void OnPointMoved(size_t pointIndex, Vector2 displacement);
-    virtual void CheckCollision(Rectangle bounds, std::vector<size_t>& buffer);
+    virtual void CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer);
     World(/* args */);
     virtual ~World();
 };

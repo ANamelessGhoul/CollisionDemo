@@ -75,7 +75,7 @@ void World::OnPointMoved(size_t index, Vector2 displacement)
 
 }
 
-void World::CheckCollision(Rectangle bounds, std::vector<size_t>& buffer)
+void World::CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer)
 {
     for(size_t i = 0; i < objectCount; i++)
     {
