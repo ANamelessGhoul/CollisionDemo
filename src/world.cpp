@@ -67,6 +67,7 @@ void World::UpdatePoints()
         Vector2 displacement = Vector2Scale(velocities[i], deltaTime);
         OnPointMoved(i, displacement);
         positions[i] = Vector2Add(positions[i], displacement);
+
     }  
 }
 

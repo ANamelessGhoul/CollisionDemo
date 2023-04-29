@@ -21,6 +21,7 @@
 
 #include "raylib.h"
 #include "world.h"
+#include "quadTreeWorld.h"
 
 int main() 
 {
@@ -31,7 +32,8 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib");
 
-    World world = World{ };
+    // World world = World{ };
+    QuadTreeWorld quadTreeWorld = QuadTreeWorld();
 
     Camera2D camera = { 0 };
     camera.zoom = 1;
@@ -50,8 +52,9 @@ int main()
         //----------------------------------------------------------------------------------
         //----------------------------------------------------------------------------------
 
-        world.UpdatePoints();
+        // world.UpdatePoints();
 
+        quadTreeWorld.UpdatePoints();
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -59,7 +62,8 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera);
-                world.DrawPoints();
+                // world.DrawPoints();
+                quadTreeWorld.DrawPoints();
             EndMode2D();
 
             DrawText("This is a raylib example", 10, 40, 20, DARKGRAY);

@@ -1,8 +1,9 @@
 #include "quadTree.h"
+#include <iostream>
 
 QuadTree::QuadTree(const Rectangle& bounds)
 {
-    root = new Node{};
+    root = new Node;
     root->bbox = {{bounds.x + bounds.width / 2, bounds.y + bounds.height / 2}, bounds.width / 2, bounds.height / 2};
     root->level = 0;
 }
@@ -13,25 +14,26 @@ void QuadTree::splitNode(Node* node) {
     float halfHeight = node->bbox.halfHeight / 2.0f;
 
     // Create four child nodes
-    node->children[0] = new Node();
+    for (int i = 0; i < 4; i++) {
+        node->children[i] = new Node();
+        node->children[i]->level = node->level + 1;
+        node->children[i]->parent = node; // Set the parent pointer for each child node
+    }
+
     node->children[0]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y - halfHeight }, halfWidth, halfHeight };
-    node->children[0]->level = node->level + 1;
-
-    node->children[1] = new Node();
     node->children[1]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y - halfHeight }, halfWidth, halfHeight };
-    node->children[1]->level = node->level + 1;
-
-    node->children[2] = new Node();
     node->children[2]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y + halfHeight }, halfWidth, halfHeight };
-    node->children[2]->level = node->level + 1;
-
-    node->children[3] = new Node();
     node->children[3]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y + halfHeight }, halfWidth, halfHeight };
-    node->children[3]->level = node->level + 1;
 
     // Move points to child nodes
     for (size_t i = 0; i < node->indices.size(); i++) {
-        int childIndex = getIndex(node->children[0]->bbox, positions[node->indices[i]]);
+        if (node->indices[i] >= positions.size()) {
+            std::cerr << "Error: Invalid index in positions vector: " << node->indices[i] << std::endl;
+            continue;
+        }
+
+        // Use the root node's bbox to determine the child index, as all child nodes' bboxes are now initialized
+        int childIndex = getIndex(root->bbox, positions[node->indices[i]]);
         if (childIndex != -1) {
             insertIntoChild(node, childIndex, node->indices[i]);
         }
@@ -42,7 +44,50 @@ void QuadTree::splitNode(Node* node) {
 }
 
 
+
+void QuadTree::remove(size_t index, const Vector2& point) {
+    // Find the leaf node that contains the point
+    Node* leafNode = root;
+    while (!leafNode->indices.empty() || leafNode->children[0] != nullptr) {
+        int childIndex = getIndex(leafNode->bbox, point);
+        if (leafNode->children[childIndex] == nullptr)
+        {
+            break;
+        }
+        leafNode = leafNode->children[childIndex];
+    }
+
+    // Remove the index from the leaf node
+    for (auto it = leafNode->indices.begin(); it != leafNode->indices.end(); ++it) {
+        if (*it == index) {
+            leafNode->indices.erase(it);
+
+            // Check if the node needs to be merged
+            while (leafNode->indices.empty() && leafNode->level > 0) {
+                Node* parentNode = leafNode->parent;
+                for (size_t i = 1; i < 4; i++) {
+                    if (parentNode->children[i]->bbox.center.x == leafNode->bbox.center.x &&
+                        parentNode->children[i]->bbox.center.y == leafNode->bbox.center.y) {
+                        deleteNode(leafNode);
+                        parentNode->children[i] = nullptr;
+                        break;
+                    }
+                }
+                leafNode = parentNode;
+            }
+            break;
+        }
+    }
+}
+
+
+
+
 int QuadTree::getIndex(const BoundingBoxCustom& bbox, const Vector2& point) {
+
+    std::cout << "Point: (" << point.x << ", " << point.y << ")" << std::endl;
+    std::cout << "BBox Center: (" << bbox.center.x << ", " << bbox.center.y << ")" << std::endl;
+
     bool topHalf = point.y < bbox.center.y;
     bool leftHalf = point.x < bbox.center.x;
 
@@ -60,8 +105,12 @@ int QuadTree::getIndex(const BoundingBoxCustom& bbox, const Vector2& point) {
 
 void QuadTree::insert(size_t index, const Vector2& point) {
     // Insert the point into the root node
-    insertIntoChild(root, getIndex(root->bbox, point), index);
+    int childIndex = getIndex(root->bbox, point);
+    if (childIndex != -1) {
+        insertIntoChild(root, childIndex, index);
+    }
 }
+
 
 void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
     // If the node is a leaf, add the index to its indices vector
@@ -75,7 +124,10 @@ void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
     }
     // Otherwise, insert the index into the appropriate child node
     else {
-        insertIntoChild(node->children[childIndex], getIndex(node->children[childIndex]->bbox, positions[index]), index);
+        int newChildIndex = getIndex(node->children[childIndex]->bbox, positions[index]);
+        if (newChildIndex != -1) {
+            insertIntoChild(node->children[childIndex], newChildIndex, index);
+        }
     }
 }
 

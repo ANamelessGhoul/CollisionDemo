@@ -11,11 +11,20 @@ struct BoundingBoxCustom {
 };
 
 struct Node {
-    std::vector<size_t> indices;
     BoundingBoxCustom bbox;
-    std::array<Node*, 4> children;
-    unsigned int level;
+    std::vector<size_t> indices;
+    Node* parent = nullptr;
+    Node* children[4];  // Initialize the children pointers to nullptr
+    int level;
+
+    // Add a constructor for the Node struct
+    Node() {
+        for (int i = 0; i < 4; ++i) {
+            children[i] = nullptr;
+        }
+    }
 };
+
 
 class QuadTree {
 private:
@@ -25,7 +34,7 @@ private:
     std::vector<Vector2> positions;
 
     void splitNode(Node* node);
-    int getIndex(const BoundingBoxCustom& bbox, const Vector2& point);
+    int getIndex(const BoundingBoxCustom &bbox, const Vector2 &point);
     void insertIntoChild(Node* node, int childIndex, size_t index);
     void deleteNode(Node* node);
     int QueryNearest(const Vector2 &position);
@@ -35,6 +44,7 @@ private:
 public:
     QuadTree(const Rectangle& bbox);
     ~QuadTree();
+    void remove(size_t index, const Vector2 &point);
     void insert(size_t index, const Vector2& point);
     void search(const Rectangle& searchBbox, std::vector<size_t>& results);
 };
