@@ -1,5 +1,12 @@
 #include "quadTree.h"
 
+QuadTree::QuadTree(const Rectangle& bounds)
+{
+    root = new Node{};
+    root->bbox = {{bounds.x + bounds.width / 2, bounds.y + bounds.height / 2}, bounds.width / 2, bounds.height / 2};
+    root->level = 0;
+}
+
 void QuadTree::splitNode(Node* node) {
     Vector2 center = node->bbox.center;
     float halfWidth = node->bbox.halfWidth / 2.0f;
@@ -51,12 +58,12 @@ int QuadTree::getIndex(const BoundingBoxCustom& bbox, const Vector2& point) {
     return -1;  // point does not fit in any quadrant
 }
 
-void QuadTree::insert(int index, const Vector2& point) {
+void QuadTree::insert(size_t index, const Vector2& point) {
     // Insert the point into the root node
     insertIntoChild(root, getIndex(root->bbox, point), index);
 }
 
-void QuadTree::insertIntoChild(Node* node, int childIndex, int index) {
+void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
     // If the node is a leaf, add the index to its indices vector
     if (!node->children[0]) {
         node->indices.push_back(index);
@@ -96,6 +103,13 @@ int QuadTree::QueryNearest(const Vector2& position) {
     return nearestIndex;
 }
 
+bool BoundingBoxCircleOverlap(const BoundingBoxCustom& bbox, const Vector2& position, float radius) {
+    Vector2 closestPoint = Vector2{ Clamp(position.x, bbox.center.x - bbox.halfWidth, bbox.center.x + bbox.halfWidth),
+                                    Clamp(position.y, bbox.center.y - bbox.halfHeight, bbox.center.y + bbox.halfHeight) };
+    float distance = Vector2Distance(closestPoint, position);
+    return distance < radius;
+}
+
 void QuadTree::QueryNearestRecursive(Node* node, const Vector2& position, int& nearestIndex, float& nearestDistance) {
     if (!node) {
         return;
@@ -127,17 +141,14 @@ float QuadTree::BoundingBoxCustomDistance(const Vector2& position, const Boundin
     return sqrt(dx * dx + dy * dy);
 }
 
-bool BoundingBoxCircleOverlap(const BoundingBoxCustom& bbox, const Vector2& position, float radius) {
-    Vector2 closestPoint = Vector2{ Clamp(position.x, bbox.center.x - bbox.halfWidth, bbox.center.x + bbox.halfWidth),
-                                    Clamp(position.y, bbox.center.y - bbox.halfHeight, bbox.center.y + bbox.halfHeight) };
-    float distance = Vector2Distance(closestPoint, position);
-    return distance < radius;
-}
 
-void QuadTree::search(const BoundingBoxCustom& searchBbox, std::vector<int>& results) {
+
+void QuadTree::search(const Rectangle& bounds, std::vector<size_t>& results) {
     if (!root) {
         return;
     }
+
+    BoundingBoxCustom searchBbox = {{bounds.x + bounds.width / 2, bounds.y + bounds.height / 2}, bounds.width / 2, bounds.height / 2};
 
     std::vector<Node*> nodesToCheck;
     nodesToCheck.push_back(root);
