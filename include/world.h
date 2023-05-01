@@ -23,8 +23,8 @@ protected:
     std::vector<size_t> screenCollisionsBuffer;
     std::vector<size_t> collisionsBuffer;
 
-    const float WORLD_SIZE = { 5000.0f };
-    const unsigned long long DESIRED_COUNT = {100000ull};
+    const float WORLD_SIZE = { 2500.0f };
+    const unsigned long long DESIRED_COUNT = {10000ull};
 
 public:
     int PointsSize();

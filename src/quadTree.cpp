@@ -22,10 +22,10 @@ void QuadTree::splitNode(Node* node) {
         node->children[i]->parent = node; // Set the parent pointer for each child node
     }
 
-    node->children[0]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y - halfHeight }, halfWidth, halfHeight };
-    node->children[1]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y - halfHeight }, halfWidth, halfHeight };
-    node->children[2]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y + halfHeight }, halfWidth, halfHeight };
-    node->children[3]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y + halfHeight }, halfWidth, halfHeight };
+    node->children[0]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y - halfHeight }, halfWidth, halfHeight }; // NW
+    node->children[1]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y - halfHeight }, halfWidth, halfHeight }; // NE
+    node->children[2]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y + halfHeight }, halfWidth, halfHeight }; // SW
+    node->children[3]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y + halfHeight }, halfWidth, halfHeight }; // SE
 
     // Move points to child nodes
     for (size_t i = 0; i < node->indices.size(); i++) {
@@ -93,14 +93,14 @@ int QuadTree::getIndex(const BoundingBoxCustom& bbox, const Vector2& point) {
     bool topHalf = point.y < bbox.center.y;
     bool leftHalf = point.x < bbox.center.x;
 
-    if (leftHalf && topHalf)
-        return 2;
-    else if (!leftHalf && topHalf)
-        return 3;
-    else if (leftHalf && !topHalf)
+    if (leftHalf && topHalf) // NW
         return 0;
-    else if (!leftHalf && !topHalf)
+    else if (!leftHalf && topHalf) // NE
         return 1;
+    else if (leftHalf && !topHalf) // SW
+        return 2;
+    else if (!leftHalf && !topHalf) // SE
+        return 3;
 
     return -1;  // point does not fit in any quadrant
 }
@@ -218,14 +218,7 @@ void QuadTree::search(const Rectangle& bounds, std::vector<size_t>& results) {
 
             // Node intersects the search bounding box, add its points to the results
             for (const auto& index : currentNode->indices) {
-                Vector2& point = world->GetPosition(index);
-                if (point.x >= searchBbox.center.x - searchBbox.halfWidth &&
-                    point.x <= searchBbox.center.x + searchBbox.halfWidth &&
-                    point.y >= searchBbox.center.y - searchBbox.halfHeight &&
-                    point.y <= searchBbox.center.y + searchBbox.halfHeight) {
-
-                    results.push_back(index);
-                }
+                results.push_back(index);
             }
 
             // If it's a leaf node, no need to check children
