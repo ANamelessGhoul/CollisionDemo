@@ -23,12 +23,15 @@ protected:
     std::vector<size_t> screenCollisionsBuffer;
     std::vector<size_t> collisionsBuffer;
 
-    const float WORLD_SIZE = { 5000.0f };
-    const unsigned long long DESIRED_COUNT = {100000ull};
+    const float WORLD_SIZE = { 2000.0f };
+    const unsigned long long DESIRED_COUNT = {10000ull};
+
+    static Rectangle GetCircleBounds(Vector2 position, float radius);
 
 public:
     void DrawPoints();
     void UpdatePoints();
+    virtual void OnPointAdded(size_t pointIndex);
     virtual void OnPointMoved(size_t pointIndex, Vector2 displacement);
     virtual void CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer);
     World(/* args */);

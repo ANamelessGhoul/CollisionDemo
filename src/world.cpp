@@ -1,6 +1,6 @@
 #include "world.h"
 
-Rectangle GetCircleBounds(Vector2 position, float radius)
+Rectangle World::GetCircleBounds(Vector2 position, float radius)
 {
     return {position.x - radius, position.y - radius, radius * 2, radius * 2};
 }
@@ -13,6 +13,7 @@ World::World(/* args */)
     for (size_t i = 0; i < DESIRED_COUNT; i++)
     {
         CreateRandomPoint();
+        OnPointAdded(i);
     }
 }
 
@@ -24,7 +25,9 @@ void World::CreateRandomPoint()
 {
     objectCount++;
     positions.emplace_back(GetRandomVector2InRange(-WORLD_SIZE, WORLD_SIZE));
-    velocities.emplace_back(Vector2Scale(GetRandomDirection(), GetRandomFloatInRange(0, 100)));
+    float speed = GetRandomFloatInRange(-300, 100);
+    speed = speed < 0 ? 0 : speed;
+    velocities.emplace_back(Vector2Scale(GetRandomDirection(), speed));
     radiuses.emplace_back(GetRandomFloatInRange(5, 20));
 }
 
@@ -68,6 +71,10 @@ void World::UpdatePoints()
         OnPointMoved(i, displacement);
         positions[i] = Vector2Add(positions[i], displacement);
     }  
+}
+void World::OnPointAdded(size_t pointIndex)
+{
+
 }
 
 void World::OnPointMoved(size_t index, Vector2 displacement)
