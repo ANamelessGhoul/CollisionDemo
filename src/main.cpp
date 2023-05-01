@@ -32,8 +32,8 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib");
 
-    // World world = World{ };
-    QuadTreeWorld quadTreeWorld = QuadTreeWorld();
+    // World world(screenWidth, screenHeight);
+    QuadTreeWorld quadTreeWorld(screenWidth, screenHeight);
 
     Camera2D camera = { 0 };
     camera.zoom = 1;

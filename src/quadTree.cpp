@@ -1,241 +1,143 @@
 #include "quadTree.h"
 #include "quadTreeWorld.h"
-#include <iostream>
 
-QuadTree::QuadTree(QuadTreeWorld* newWorld, const Rectangle& bounds)
-{
-    world = newWorld;
-    root = new Node;
-    root->bbox = {{bounds.x + bounds.width / 2, bounds.y + bounds.height / 2}, bounds.width / 2, bounds.height / 2};
-    root->level = 0;
-}
-
-void QuadTree::splitNode(Node* node) {
-    Vector2 center = node->bbox.center;
-    float halfWidth = node->bbox.halfWidth / 2.0f;
-    float halfHeight = node->bbox.halfHeight / 2.0f;
-
-    // Create four child nodes
-    for (int i = 0; i < 4; i++) {
-        node->children[i] = new Node();
-        node->children[i]->level = node->level + 1;
-        node->children[i]->parent = node; // Set the parent pointer for each child node
-    }
-
-    node->children[0]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y - halfHeight }, halfWidth, halfHeight };
-    node->children[1]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y - halfHeight }, halfWidth, halfHeight };
-    node->children[2]->bbox = BoundingBoxCustom{ Vector2{ center.x - halfWidth, center.y + halfHeight }, halfWidth, halfHeight };
-    node->children[3]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y + halfHeight }, halfWidth, halfHeight };
-
-    // Move points to child nodes
-    for (size_t i = 0; i < node->indices.size(); i++) {
-        if (node->indices[i] >= world->PointsSize()) {
-            std::cerr << "Error: Invalid index in positions vector: " << node->indices[i] << std::endl;
-            continue;
-        }
-
-        // Use the root node's bbox to determine the child index, as all child nodes' bboxes are now initialized
-        int childIndex = getIndex(root->bbox, world->GetPosition(node->indices[i]));
-        if (childIndex != -1) {
-            insertIntoChild(node, childIndex, node->indices[i]);
-        }
-    }
-
-    // Clear the current node's point indices
-    node->indices.clear();
+void Quadtree::query(Rectangle range, std::vector<size_t>& results) {
+    queryRecursive(root, range, results);
 }
 
 
-
-void QuadTree::remove(size_t index, const Vector2& point) {
-    // Find the leaf node that contains the point
-    Node* leafNode = root;
-    while (!leafNode->indices.empty() || leafNode->children[0] != nullptr) {
-        int childIndex = getIndex(leafNode->bbox, point);
-        if (leafNode->children[childIndex] == nullptr)
-        {
-            break;
-        }
-        leafNode = leafNode->children[childIndex];
+void Quadtree::queryRecursive(Node* node, Rectangle range, std::vector<size_t>& results) {
+    if (!CheckCollisionRecs(node->bounds, range)) {
+        // Node is entirely outside of the range, so skip it
+        return;
     }
 
-    // Remove the index from the leaf node
-    for (auto it = leafNode->indices.begin(); it != leafNode->indices.end(); ++it) {
-        if (*it == index) {
-            leafNode->indices.erase(it);
-
-            // Check if the node needs to be merged
-            while (leafNode->indices.empty() && leafNode->level > 0) {
-                Node* parentNode = leafNode->parent;
-                for (size_t i = 1; i < 4; i++) {
-                    if (parentNode->children[i]->bbox.center.x == leafNode->bbox.center.x &&
-                        parentNode->children[i]->bbox.center.y == leafNode->bbox.center.y) {
-                        deleteNode(leafNode);
-                        parentNode->children[i] = nullptr;
-                        break;
-                    }
-                }
-                leafNode = parentNode;
-            }
-            break;
+    for (const auto& entry: node->points) {
+        if (CheckCollisionPointRec(entry, range)) {
+            // results[resultsCount++] = entry.first;
+            results.emplace_back(entry);
         }
+    }
+
+    if (node->nw != nullptr) {
+        queryRecursive(node->nw, range, results, resultsCount);
+        queryRecursive(node->ne, range, results, resultsCount);
+        queryRecursive(node->sw, range, results, resultsCount);
+        queryRecursive(node->se, range, results, resultsCount);
     }
 }
 
 
 
-
-int QuadTree::getIndex(const BoundingBoxCustom& bbox, const Vector2& point) {
-
-    std::cout << "Point: (" << point.x << ", " << point.y << ")" << std::endl;
-    std::cout << "BBox Center: (" << bbox.center.x << ", " << bbox.center.y << ")" << std::endl;
-
-    bool topHalf = point.y < bbox.center.y;
-    bool leftHalf = point.x < bbox.center.x;
-
-    if (leftHalf && topHalf)
-        return 2;
-    else if (!leftHalf && topHalf)
-        return 3;
-    else if (leftHalf && !topHalf)
-        return 0;
-    else if (!leftHalf && !topHalf)
-        return 1;
-
-    return -1;  // point does not fit in any quadrant
+// Friend function definition
+bool Contains(const Rectangle& rect, const Vector2& point) {
+    return (point.x >= rect.x && point.x <= rect.x + rect.width
+        && point.y >= rect.y && point.y <= rect.y + rect.height);
 }
 
-void QuadTree::insert(size_t index, const Vector2& point) {
-    // Insert the point into the root node
-    int childIndex = getIndex(root->bbox, point);
-    if (childIndex != -1) {
-        insertIntoChild(root, childIndex, index);
+// Modified insert method that uses the Contains method
+bool Quadtree::insert(size_t index, Vector2 point) {
+    if (!Contains(root->bounds, point)) {
+        // Point is outside of the root node's bounds, so don't insert it
+        return false;
     }
-}
-
-
-void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
-    // If the node is a leaf, add the index to its indices vector
-    if (!node->children[0]) {
-        node->indices.push_back(index);
-
-        // Split the node if it exceeds the maximum number of objects and the maximum level
-        if (node->indices.size() > MAX_OBJECTS && node->level < MAX_LEVELS) {
-            splitNode(node);
+    Node* node = root;
+    while (node->nw != nullptr) {
+        // Point is inside an internal node, so descend the tree
+        int xMid = (node->bounds.x + node->bounds.width) / 2.0;
+        int yMid = (node->bounds.y + node->bounds.height) / 2.0;
+        if (point.x <= xMid && point.y <= yMid) {
+            node = node->nw;
+        } else if (point.x > xMid && point.y <= yMid) {
+            node = node->ne;
+        } else if (point.x <= xMid && point.y > yMid) {
+            node = node->sw;
+        } else {
+            node = node->se;
         }
     }
-    // Otherwise, insert the index into the appropriate child node
-    else {
-        int newChildIndex = getIndex(node->children[childIndex]->bbox, world->GetPosition(index));
-        if (newChildIndex != -1) {
-            insertIntoChild(node->children[childIndex], newChildIndex, index);
-        }
+    node->points.insert({index, point});
+    if (node->points.size() > static_cast<size_t>(capacity)) {
+        subdivide(node);
     }
+    return true;
+}
+void Quadtree::clear() {
+    // Delete all nodes in the tree
+    deleteSubtree(root);
+
+    // Create a new root node with the original bounds
+    Node* newRoot = new Node{root->bounds, std::unordered_map<size_t, Vector2>(), nullptr, nullptr, nullptr, nullptr};
+    delete root;
+    root = newRoot;
 }
 
-QuadTree::~QuadTree() {
-    // Delete all nodes starting from the root
-    deleteNode(root);
+Quadtree::Quadtree(Rectangle bounds, World* newWorld) : world(newWorld) {
+    root = new Node{bounds, nullptr, nullptr, nullptr, nullptr};
+    this->capacity = capacity;
 }
 
-void QuadTree::deleteNode(Node* node) {
-    // Recursively delete all children nodes
-    for (int i = 0; i < 4; i++) {
-        if (node->children[i] != nullptr) {
-            deleteNode(node->children[i]);
-        }
-    }
 
-    // Delete this node
+Quadtree::~Quadtree() {
+    deleteSubtree(root);
+}
+
+void Quadtree::deleteSubtree(Node* node) {
+    if (node->nw != nullptr) {
+        deleteSubtree(node->nw);
+        deleteSubtree(node->ne);
+        deleteSubtree(node->sw);
+        deleteSubtree(node->se);
+    }
     delete node;
 }
 
-int QuadTree::QueryNearest(const Vector2& position) {
-    int nearestIndex = -1;
-    float nearestDistance = FLT_MAX;
-    QueryNearestRecursive(root, position, nearestIndex, nearestDistance);
-    return nearestIndex;
-}
+void Quadtree::subdivide(Node* node) {
+    node->deleteChildren();
 
-bool BoundingBoxCircleOverlap(const BoundingBoxCustom& bbox, const Vector2& position, float radius) {
-    Vector2 closestPoint = Vector2{ Clamp(position.x, bbox.center.x - bbox.halfWidth, bbox.center.x + bbox.halfWidth),
-                                    Clamp(position.y, bbox.center.y - bbox.halfHeight, bbox.center.y + bbox.halfHeight) };
-    float distance = Vector2Distance(closestPoint, position);
-    return distance < radius;
-}
+    float subWidth = node->bounds.width / 2.0f;
+    float subHeight = node->bounds.height / 2.0f;
+    float x = node->bounds.x;
+    float y = node->bounds.y;
 
-void QuadTree::QueryNearestRecursive(Node* node, const Vector2& position, int& nearestIndex, float& nearestDistance) {
-    if (!node) {
-        return;
-    }
+    // Create four child nodes with the appropriate bounds
+    Rectangle nwBounds = {x, y, subWidth, subHeight};
+    node->nw = new Node{nwBounds, std::unordered_map<size_t, Vector2>(), nullptr, nullptr, nullptr, nullptr};
 
-    // Check if this node is closer than the current nearest point
-    for (const auto& index : node->indices) {
-        float distance = Vector2Distance(position, world->GetPosition(index));
-        if (distance < nearestDistance) {
-            nearestIndex = index;
-            nearestDistance = distance;
-        }
-    }
+    Rectangle neBounds = {x + subWidth, y, subWidth, subHeight};
+    node->ne = new Node{neBounds, std::unordered_map<size_t, Vector2>(), nullptr, nullptr, nullptr, nullptr};
 
-    // Check if any child nodes intersect with the search radius
-    for (const auto& child : node->children) {
-        if (child && BoundingBoxCircleOverlap(child->bbox, position, nearestDistance)) {
-            float distanceToChild = BoundingBoxCustomDistance(position, child->bbox);
-            if (distanceToChild < nearestDistance) {
-                QueryNearestRecursive(child, position, nearestIndex, nearestDistance);
-            }
-        }
-    }
-}
+    Rectangle swBounds = {x, y + subHeight, subWidth, subHeight};
+    node->sw = new Node{swBounds, std::unordered_map<size_t, Vector2>(), nullptr, nullptr, nullptr, nullptr};
 
-float QuadTree::BoundingBoxCustomDistance(const Vector2& position, const BoundingBoxCustom& bbox) {
-    float dx = std::max(bbox.center.x - position.x - bbox.halfWidth, 0.0f);
-    float dy = std::max(bbox.center.y - position.y - bbox.halfHeight, 0.0f);
-    return sqrt(dx * dx + dy * dy);
+    Rectangle seBounds = {x + subWidth, y + subHeight, subWidth, subHeight};
+    node->se = new Node{seBounds, std::unordered_map<size_t, Vector2>(), nullptr, nullptr, nullptr, nullptr};
 }
 
 
 
-void QuadTree::search(const Rectangle& bounds, std::vector<size_t>& results) {
-    if (!root) {
-        return;
-    }
-
-    BoundingBoxCustom searchBbox = {{bounds.x + bounds.width / 2, bounds.y + bounds.height / 2}, bounds.width / 2, bounds.height / 2};
-
-    std::vector<Node*> nodesToCheck;
-    nodesToCheck.push_back(root);
-
-    while (!nodesToCheck.empty()) {
-        Node* currentNode = nodesToCheck.back();
-        nodesToCheck.pop_back();
-
-        if (currentNode->bbox.halfWidth + currentNode->bbox.center.x >= searchBbox.center.x - searchBbox.halfWidth &&
-            currentNode->bbox.center.x - currentNode->bbox.halfWidth <= searchBbox.center.x + searchBbox.halfWidth &&
-            currentNode->bbox.halfHeight + currentNode->bbox.center.y >= searchBbox.center.y - searchBbox.halfHeight &&
-            currentNode->bbox.center.y - currentNode->bbox.halfHeight <= searchBbox.center.y + searchBbox.halfHeight) {
-
-            // Node intersects the search bounding box, add its points to the results
-            for (const auto& index : currentNode->indices) {
-                Vector2& point = world->GetPosition(index);
-                if (point.x >= searchBbox.center.x - searchBbox.halfWidth &&
-                    point.x <= searchBbox.center.x + searchBbox.halfWidth &&
-                    point.y >= searchBbox.center.y - searchBbox.halfHeight &&
-                    point.y <= searchBbox.center.y + searchBbox.halfHeight) {
-
-                    results.push_back(index);
-                }
-            }
-
-            // If it's a leaf node, no need to check children
-            if (currentNode->children[0] != nullptr) {
-                // Check the children
-                for (const auto& child : currentNode->children) {
-                    nodesToCheck.push_back(child);
-                }
-            }
-        }
-    }
+bool Quadtree::remove(size_t index, Vector2 point) {
+    return removeRecursive(root, index, point);
 }
+bool Quadtree::removeRecursive(Node* node, size_t index, Vector2 point) {
+    if (!Contains(node->bounds, point)) {
+        return false;
+    }
 
+    auto it = node->points.find(index);
+    if (it != node->points.end()) {
+        node->points.erase(it);
+        return true;
+    }
+
+    if (node->nw == nullptr) {
+        return false;
+    }
+
+    if (removeRecursive(node->nw, index, point)) return true;
+    if (removeRecursive(node->ne, index, point)) return true;
+    if (removeRecursive(node->sw, index, point)) return true;
+    if (removeRecursive(node->se, index, point)) return true;
+
+    return false;
+}

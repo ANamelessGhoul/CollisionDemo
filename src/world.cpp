@@ -1,12 +1,13 @@
 #include "world.h"
+#include <iostream>
 
-Rectangle GetCircleBounds(Vector2 position, float radius)
+Rectangle World::GetCircleBounds(Vector2 position, float radius)
 {
     return {position.x - radius, position.y - radius, radius * 2, radius * 2};
 }
 
-World::World(/* args */)
-{
+World::World(int screenWidth, int screenHeight)
+    : screenWidth(screenWidth), screenHeight(screenHeight), screenRect{0, 0, static_cast<float>(screenWidth), static_cast<float>(screenHeight)} {
     objectCount = 0;
     srand(644939421);
 
@@ -40,34 +41,40 @@ void World::CreateRandomPoint()
 
 void World::DrawPoints()
 {
-    auto screenRect = Rectangle{0, 0, 800, 450};
     screenCollisionsBuffer.clear();
     CheckCollision(screenRect, screenCollisionsBuffer);
+
+    // Create a temporary buffer for storing indices of potential collisions
+    std::vector<size_t> potentialCollisions;
+
     for (size_t i : screenCollisionsBuffer)
     {
         collisionsBuffer.clear();
-        Rectangle bounds = {positions[i].x - radiuses[i], positions[i].y - radiuses[i], radiuses[i] * 2, radiuses[i] * 2};
-        CheckCollision(bounds, collisionsBuffer);
-        
+        Rectangle bounds = GetCircleBounds(positions[i], radiuses[i]);
+
+        // Find potential collisions only once per circle on the screen
+        potentialCollisions.clear();
+        CheckCollision(bounds, potentialCollisions);
+
         bool hasCollision = false;
-        for (size_t index : collisionsBuffer)
+        for (size_t index : potentialCollisions)
         {
             // Ignore self collisions
             if (index == i)
                 continue;
-            
-            // Do precise collision
-            if (!CheckCollisionCircles(positions[i], radiuses[i], positions[index], radiuses[index]))
-                continue;
 
-            hasCollision = true;
-            break;
+            // Do precise collision
+            if (CheckCollisionCircles(positions[i], radiuses[i], positions[index], radiuses[index]))
+            {
+                hasCollision = true;
+                break;
+            }
         }
-        
 
         DrawCircleV(positions[i], radiuses[i], hasCollision ? RED : BLACK);
-    }  
+    }
 }
+
 
 void World::UpdatePoints()
 {
@@ -88,11 +95,12 @@ void World::OnPointMoved(size_t index, Vector2 displacement)
 
 void World::CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer)
 {
+    buffer.reserve(objectCount);
     for(size_t i = 0; i < objectCount; i++)
     {
         if(CheckCollisionCircleRec(positions[i], radiuses[i], bounds))
         {
-            buffer.emplace_back(i);
+            buffer.push_back(i);
         }
     }
 }

@@ -1,20 +1,25 @@
-#ifndef QUAD_TREE_WORLD_H
-#define QUAD_TREE_WORLD_H
+#ifndef QUADTREE_WORLD_H
+#define QUADTREE_WORLD_H
 
 #include "world.h"
-#include <iostream>
+#include "quadTree.h"
 
-class QuadTree;
-
-class QuadTreeWorld : public World
-{
-private:
-    QuadTree* quadTree;
+class QuadTreeWorld : public World {
 public:
-    QuadTreeWorld();
+    QuadTreeWorld(int screenWidth, int screenHeight);
     ~QuadTreeWorld();
-    void CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer) override;
-    void OnPointMoved(size_t pointIndex, Vector2 displacement) override;
+
+    virtual void OnPointMoved(size_t pointIndex, Vector2 displacement) override;
+    virtual void CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer) override;
+    virtual void DrawPoints() override;
+private:
+    Quadtree quadtree;
+    std::unordered_map<size_t, Vector2> bufferPoints;
+    int buffer;
+    size_t pointIndicesCount; // To keep track of the number of indices stored in the array
+    // Store indices for each point in the quadtree
+    void InsertPointToQuadtree(size_t index);
+    void RemovePointFromQuadtree(size_t index);
 };
 
-#endif // QUAD_TREE_WORLD_H
+#endif // QUADTREE_WORLD_H
