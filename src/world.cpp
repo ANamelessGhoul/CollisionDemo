@@ -20,6 +20,16 @@ World::~World()
 {
 }
 
+Vector2& World::GetPosition(int index)
+{
+    return positions[index];
+}
+
+int World::PointsSize()
+{
+    return positions.size();
+}
+
 void World::CreateRandomPoint()
 {
     objectCount++;

@@ -1,8 +1,10 @@
 #include "quadTree.h"
+#include "quadTreeWorld.h"
 #include <iostream>
 
-QuadTree::QuadTree(const Rectangle& bounds)
+QuadTree::QuadTree(QuadTreeWorld* newWorld, const Rectangle& bounds)
 {
+    world = newWorld;
     root = new Node;
     root->bbox = {{bounds.x + bounds.width / 2, bounds.y + bounds.height / 2}, bounds.width / 2, bounds.height / 2};
     root->level = 0;
@@ -27,13 +29,13 @@ void QuadTree::splitNode(Node* node) {
 
     // Move points to child nodes
     for (size_t i = 0; i < node->indices.size(); i++) {
-        if (node->indices[i] >= positions.size()) {
+        if (node->indices[i] >= world->PointsSize()) {
             std::cerr << "Error: Invalid index in positions vector: " << node->indices[i] << std::endl;
             continue;
         }
 
         // Use the root node's bbox to determine the child index, as all child nodes' bboxes are now initialized
-        int childIndex = getIndex(root->bbox, positions[node->indices[i]]);
+        int childIndex = getIndex(root->bbox, world->GetPosition(node->indices[i]));
         if (childIndex != -1) {
             insertIntoChild(node, childIndex, node->indices[i]);
         }
@@ -124,7 +126,7 @@ void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
     }
     // Otherwise, insert the index into the appropriate child node
     else {
-        int newChildIndex = getIndex(node->children[childIndex]->bbox, positions[index]);
+        int newChildIndex = getIndex(node->children[childIndex]->bbox, world->GetPosition(index));
         if (newChildIndex != -1) {
             insertIntoChild(node->children[childIndex], newChildIndex, index);
         }
@@ -169,7 +171,7 @@ void QuadTree::QueryNearestRecursive(Node* node, const Vector2& position, int& n
 
     // Check if this node is closer than the current nearest point
     for (const auto& index : node->indices) {
-        float distance = Vector2Distance(position, positions[index]);
+        float distance = Vector2Distance(position, world->GetPosition(index));
         if (distance < nearestDistance) {
             nearestIndex = index;
             nearestDistance = distance;
@@ -216,7 +218,7 @@ void QuadTree::search(const Rectangle& bounds, std::vector<size_t>& results) {
 
             // Node intersects the search bounding box, add its points to the results
             for (const auto& index : currentNode->indices) {
-                Vector2& point = positions[index];
+                Vector2& point = world->GetPosition(index);
                 if (point.x >= searchBbox.center.x - searchBbox.halfWidth &&
                     point.x <= searchBbox.center.x + searchBbox.halfWidth &&
                     point.y >= searchBbox.center.y - searchBbox.halfHeight &&

@@ -1,3 +1,6 @@
+#ifndef QUAD_TREE_H
+#define QUAD_TREE_H
+
 #include "raylib.h"
 #include "raymath.h"
 #include <cfloat>
@@ -31,8 +34,7 @@ private:
     const unsigned int MAX_OBJECTS = 10;
     const unsigned int MAX_LEVELS = 5;
     Node* root;
-    std::vector<Vector2> positions;
-
+    class QuadTreeWorld* world;
     void splitNode(Node* node);
     int getIndex(const BoundingBoxCustom &bbox, const Vector2 &point);
     void insertIntoChild(Node* node, int childIndex, size_t index);
@@ -42,9 +44,10 @@ private:
     float BoundingBoxCustomDistance(const Vector2 &position, const BoundingBoxCustom &bbox);
 
 public:
-    QuadTree(const Rectangle& bbox);
+    QuadTree(class QuadTreeWorld* newWorld, const Rectangle& bbox);
     ~QuadTree();
     void remove(size_t index, const Vector2 &point);
     void insert(size_t index, const Vector2& point);
     void search(const Rectangle& searchBbox, std::vector<size_t>& results);
 };
+#endif

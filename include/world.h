@@ -27,6 +27,8 @@ protected:
     const unsigned long long DESIRED_COUNT = {100000ull};
 
 public:
+    int PointsSize();
+    Vector2& GetPosition(int index);
     void DrawPoints();
     void UpdatePoints();
     virtual void OnPointMoved(size_t pointIndex, Vector2 displacement);

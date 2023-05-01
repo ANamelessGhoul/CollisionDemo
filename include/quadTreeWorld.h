@@ -2,13 +2,14 @@
 #define QUAD_TREE_WORLD_H
 
 #include "world.h"
-#include "quadTree.h"
 #include <iostream>
+
+class QuadTree;
 
 class QuadTreeWorld : public World
 {
 private:
-    QuadTree quadTree;
+    QuadTree* quadTree;
 public:
     QuadTreeWorld();
     ~QuadTreeWorld();

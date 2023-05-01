@@ -1,8 +1,9 @@
 #include "quadTreeWorld.h"
+#include "quadTree.h"
 
-
-QuadTreeWorld::QuadTreeWorld() : quadTree(Rectangle{ -WORLD_SIZE, -WORLD_SIZE, WORLD_SIZE * 2, WORLD_SIZE * 2 })
+QuadTreeWorld::QuadTreeWorld()
 {
+    quadTree = new QuadTree{this, Rectangle{ -WORLD_SIZE, -WORLD_SIZE, WORLD_SIZE * 2, WORLD_SIZE * 2 }};
 }
 
 QuadTreeWorld::~QuadTreeWorld()
@@ -11,7 +12,7 @@ QuadTreeWorld::~QuadTreeWorld()
 
 void QuadTreeWorld::CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer)
 {
-    quadTree.search(bounds, buffer);
+    quadTree->search(bounds, buffer);
 }
 
 void QuadTreeWorld::OnPointMoved(size_t pointIndex, Vector2 displacement)
@@ -25,7 +26,7 @@ void QuadTreeWorld::OnPointMoved(size_t pointIndex, Vector2 displacement)
         std::cerr << "Invalid point coordinates: (" << newPoint.x << ", " << newPoint.y << ")" << std::endl;
         return;
     }
-    quadTree.remove(pointIndex, positions[pointIndex]);
-    quadTree.insert(pointIndex, newPoint);
+    quadTree->remove(pointIndex, positions[pointIndex]);
+    quadTree->insert(pointIndex, newPoint);
 }
 
