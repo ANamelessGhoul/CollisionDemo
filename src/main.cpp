@@ -21,6 +21,8 @@
 
 #include "raylib.h"
 #include "world.h"
+#include "uniformGridWorld.h"
+#include <memory>
 
 int main() 
 {
@@ -31,7 +33,7 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "raylib");
 
-    World world = World{ };
+    std::unique_ptr<World> world = std::make_unique<UniformGridWorld>();
 
     Camera2D camera = { 0 };
     camera.zoom = 1;
@@ -50,7 +52,7 @@ int main()
         //----------------------------------------------------------------------------------
         //----------------------------------------------------------------------------------
 
-        world.UpdatePoints();
+        world->UpdatePoints();
 
         // Draw
         //----------------------------------------------------------------------------------
@@ -59,7 +61,7 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera);
-                world.DrawPoints();
+                world->DrawPoints();
             EndMode2D();
 
             DrawText("This is a raylib example", 10, 40, 20, DARKGRAY);
