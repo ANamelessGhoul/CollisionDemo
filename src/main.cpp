@@ -24,6 +24,8 @@
 #include "uniformGridWorld.h"
 #include <memory>
 
+void Draw2DGrid(int screenWidth, int screenHeight, int step = 100, Color gridColor = GRAY);
+
 int main() 
 {
     // Initialization
@@ -62,9 +64,11 @@ int main()
 
             BeginMode2D(camera);
                 world->DrawPoints();
+
+
             EndMode2D();
 
-            DrawText("This is a raylib example", 10, 40, 20, DARKGRAY);
+            Draw2DGrid(screenWidth, screenHeight, 200);
 
             DrawFPS(10, 10);
 
@@ -78,4 +82,21 @@ int main()
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+void Draw2DGrid(int screenWidth, int screenHeight, int step, Color gridColor)
+{
+    int x = 0;
+    while (x < screenWidth)
+    {
+        DrawLine(x, 0, x, screenHeight, gridColor);
+        x += step;
+    }
+
+    int y = 0;
+    while (y < screenHeight)
+    {
+        DrawLine(0, y, screenWidth, y, gridColor);
+        y += step;
+    }
 }

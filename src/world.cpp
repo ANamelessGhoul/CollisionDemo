@@ -9,6 +9,10 @@ World::World(/* args */)
 {
     objectCount = 0;
     srand(644939421);
+    
+    positions.reserve(DESIRED_COUNT);
+    velocities.reserve(DESIRED_COUNT);
+    radiuses.reserve(DESIRED_COUNT);
 
     for (size_t i = 0; i < DESIRED_COUNT; i++)
     {
@@ -25,7 +29,7 @@ void World::CreateRandomPoint()
 {
     objectCount++;
     positions.emplace_back(GetRandomVector2InRange(-WORLD_SIZE, WORLD_SIZE));
-    float speed = GetRandomFloatInRange(-300, 100);
+    float speed = GetRandomFloatInRange(-100, 100);
     speed = speed < 0 ? 0 : speed;
     velocities.emplace_back(Vector2Scale(GetRandomDirection(), speed));
     radiuses.emplace_back(GetRandomFloatInRange(5, 20));

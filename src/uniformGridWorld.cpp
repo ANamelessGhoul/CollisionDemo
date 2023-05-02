@@ -1,7 +1,7 @@
 #include "uniformGridWorld.h"
 
 
-UniformGridWorld::UniformGridWorld() : uniformGrid(100)
+UniformGridWorld::UniformGridWorld() : uniformGrid(200)
 {
     for (size_t i = 0; i < DESIRED_COUNT; i++)
     {
