@@ -22,9 +22,6 @@ void QuadTreeWorld::OnPointMoved(size_t pointIndex, Vector2 displacement)
     // if (positions.size() <= pointIndex || Vector2LengthSqr(displacement) <= (EPSILON))
     //     return;
 
-    if (Vector2LengthSqr(displacement) < EPSILON)
-        return;
-
     Vector2 newPoint = Vector2Add(positions[pointIndex], displacement);
 
     quadTree->remove(pointIndex, positions[pointIndex]);

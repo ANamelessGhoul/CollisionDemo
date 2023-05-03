@@ -70,12 +70,12 @@ void World::DrawPoints()
         collisionsBuffer.clear();
         Rectangle bounds = {positions[i].x - radiuses[i], positions[i].y - radiuses[i], radiuses[i] * 2, radiuses[i] * 2};
         
-        Timer timer;
-        timer.Start();
+        // Timer timer;
+        // timer.Start();
         CheckCollision(bounds, collisionsBuffer);
-        timer.Stop();
-        Stats::GetInstance().AddTimer(timer);
-        Stats::GetInstance().averageQueries.AddValue(static_cast<double>(collisionsBuffer.size()));
+        // timer.Stop();
+        // Stats::GetInstance().AddTimer(timer);
+        // Stats::GetInstance().averageQueries.AddValue(static_cast<double>(collisionsBuffer.size()));
         bool hasCollision = false;
         for (auto index : collisionsBuffer)
         {
@@ -102,8 +102,12 @@ void World::UpdatePoints()
     for (size_t i = 0; i < objectCount; i++)
     {
         Vector2 displacement = Vector2Scale(velocities[i], deltaTime);
+        Timer timer;
+        timer.Start();
         OnPointMoved(i, displacement);
         positions[i] = Vector2Add(positions[i], displacement);
+        timer.Stop();
+        Stats::GetInstance().AddTimer(timer);
     }  
 }
 void World::OnPointAdded(size_t pointIndex)

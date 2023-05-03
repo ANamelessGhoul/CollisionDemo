@@ -37,7 +37,7 @@ int main()
     InitWindow(screenWidth, screenHeight, "raylib");
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
-    std::unique_ptr<World> world = std::make_unique<QuadTreeWorld>();
+    std::unique_ptr<World> world = std::make_unique<World>();
 
     Camera2D camera = { 0 };
     camera.zoom = 1;
