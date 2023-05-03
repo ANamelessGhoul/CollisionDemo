@@ -13,6 +13,32 @@ UniformGridWorld::~UniformGridWorld()
 {
 }
 
+void Draw2DGrid(int columns, int rows, int step, Color gridColor)
+{
+    const int maxWidth = columns * step;
+    const int maxHeight = rows * step;
+    int x = 0;
+    for (int i = 0; i < columns; i++)
+    {
+        DrawLine(x, 0, x, maxHeight, gridColor);
+        x += step;
+    }
+
+    int y = 0;
+    for (int i = 0; i < rows; i++)
+    {
+        DrawLine(0, y, maxWidth, y, gridColor);
+        y += step;
+    }
+}
+
+void UniformGridWorld::Draw()
+{
+    World::Draw();
+    Draw2DGrid(4, 4, 200, GRAY);
+}
+
+
 void UniformGridWorld::CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer)
 {
     uniformGrid.Query(bounds, buffer);

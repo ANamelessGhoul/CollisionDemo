@@ -1,4 +1,5 @@
 #include "world.h"
+#include "stats.h"
 
 Rectangle World::GetCircleBounds(Vector2 position, float radius)
 {
@@ -35,17 +36,31 @@ void World::CreateRandomPoint()
     radiuses.emplace_back(GetRandomFloatInRange(5, 20));
 }
 
+void World::Draw()
+{
+    DrawPoints();
+}
+
+// Average -> Count
+// Sum(x) / count(x)
+
 void World::DrawPoints()
 {
     auto screenRect = Rectangle{0, 0, 800, 450};
     screenCollisionsBuffer.clear();
     CheckCollision(screenRect, screenCollisionsBuffer);
+    
     for (size_t i : screenCollisionsBuffer)
     {
         collisionsBuffer.clear();
         Rectangle bounds = {positions[i].x - radiuses[i], positions[i].y - radiuses[i], radiuses[i] * 2, radiuses[i] * 2};
-        CheckCollision(bounds, collisionsBuffer);
         
+        Timer timer;
+        timer.Start();
+        CheckCollision(bounds, collisionsBuffer);
+        timer.Stop();
+        Stats::GetInstance().AddTimer(timer);
+        Stats::GetInstance().averageQueries.AddValue(static_cast<double>(collisionsBuffer.size()));
         bool hasCollision = false;
         for (size_t index : collisionsBuffer)
         {

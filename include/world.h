@@ -29,6 +29,7 @@ protected:
     static Rectangle GetCircleBounds(Vector2 position, float radius);
 
 public:
+    virtual void Draw();
     void DrawPoints();
     void UpdatePoints();
     virtual void OnPointAdded(size_t pointIndex);

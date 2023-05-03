@@ -22,9 +22,8 @@
 #include "raylib.h"
 #include "world.h"
 #include "uniformGridWorld.h"
+#include "stats.h"
 #include <memory>
-
-void Draw2DGrid(int screenWidth, int screenHeight, int step = 100, Color gridColor = GRAY);
 
 int main() 
 {
@@ -43,6 +42,12 @@ int main()
     camera.target = Vector2{ 0 };
     camera.offset = Vector2{ 0 };
 
+    Stats& stats = Stats::GetInstance();
+
+    double time{};
+    double averageTimeMicro{};
+    double averageQueries{};
+
     
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -53,7 +58,7 @@ int main()
         // Update
         //----------------------------------------------------------------------------------
         //----------------------------------------------------------------------------------
-
+        
         world->UpdatePoints();
 
         // Draw
@@ -63,18 +68,25 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera);
-                world->DrawPoints();
-
+                world->Draw();
 
             EndMode2D();
-
-            Draw2DGrid(screenWidth, screenHeight, 200);
+            if (GetTime() < 10.0)
+            {
+                time = GetTime();
+                averageTimeMicro = stats.averageTime.GetValue();
+                averageQueries = stats.averageQueries.GetValue();
+            }
 
             DrawFPS(10, 10);
-
+            DrawText(TextFormat("Time Left: %.2f", 10 - time), 10, 40, 20, LIME);
+            DrawText(TextFormat("Avg Time: %.2f", averageTimeMicro), 10, 70, 20, LIME);
+            DrawText(TextFormat("Avg Queries: %.2f", averageQueries), 10, 100, 20, LIME);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
+
+    
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
@@ -84,19 +96,3 @@ int main()
     return 0;
 }
 
-void Draw2DGrid(int screenWidth, int screenHeight, int step, Color gridColor)
-{
-    int x = 0;
-    while (x < screenWidth)
-    {
-        DrawLine(x, 0, x, screenHeight, gridColor);
-        x += step;
-    }
-
-    int y = 0;
-    while (y < screenHeight)
-    {
-        DrawLine(0, y, screenWidth, y, gridColor);
-        y += step;
-    }
-}
