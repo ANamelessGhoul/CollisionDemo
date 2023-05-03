@@ -28,16 +28,16 @@ void QuadTree::splitNode(Node* node) {
     node->children[3]->bbox = BoundingBoxCustom{ Vector2{ center.x + halfWidth, center.y + halfHeight }, halfWidth, halfHeight }; // SE
 
     // Move points to child nodes
-    for (size_t i = 0; i < node->indices.size(); i++) {
-        if (node->indices[i] >= world->PointsSize()) {
-            std::cerr << "Error: Invalid index in positions vector: " << node->indices[i] << std::endl;
+    for (auto& index : node->indices) {
+        if (index.first >= world->PointsSize()) {
+            std::cerr << "Error: Invalid index in positions vector: " << index.first << std::endl;
             continue;
         }
 
         // Use the root node's bbox to determine the child index, as all child nodes' bboxes are now initialized
-        int childIndex = getIndex(root->bbox, world->GetPosition(node->indices[i]));
+        int childIndex = getIndex(root->bbox, world->GetPosition(index.first));
         if (childIndex != -1) {
-            insertIntoChild(node, childIndex, node->indices[i]);
+            node->children[childIndex]->indices[index.first] = true;
         }
     }
 
@@ -47,37 +47,34 @@ void QuadTree::splitNode(Node* node) {
 
 
 
+
 void QuadTree::remove(size_t index, const Vector2& point) {
     // Find the leaf node that contains the point
     Node* leafNode = root;
     while (!leafNode->indices.empty() || leafNode->children[0] != nullptr) {
         int childIndex = getIndex(leafNode->bbox, point);
-        if (leafNode->children[childIndex] == nullptr)
-        {
+        if (leafNode->children[childIndex] == nullptr) {
             break;
         }
         leafNode = leafNode->children[childIndex];
     }
 
     // Remove the index from the leaf node
-    for (auto it = leafNode->indices.begin(); it != leafNode->indices.end(); ++it) {
-        if (*it == index) {
-            leafNode->indices.erase(it);
+    auto it = leafNode->indices.find(index);
+    if (it != leafNode->indices.end()) {
+        leafNode->indices.erase(it);
 
-            // Check if the node needs to be merged
-            while (leafNode->indices.empty() && leafNode->level > 0) {
-                Node* parentNode = leafNode->parent;
-                for (size_t i = 1; i < 4; i++) {
-                    if (parentNode->children[i]->bbox.center.x == leafNode->bbox.center.x &&
-                        parentNode->children[i]->bbox.center.y == leafNode->bbox.center.y) {
-                        deleteNode(leafNode);
-                        parentNode->children[i] = nullptr;
-                        break;
-                    }
+        // Check if the node needs to be merged
+        while (leafNode->indices.empty() && leafNode->level > 0) {
+            Node* parentNode = leafNode->parent;
+            for (size_t i = 1; i < 4; i++) {
+                if (parentNode->children[i] != nullptr && Vector2Equals(parentNode->children[i]->bbox.center, leafNode->bbox.center)) {
+                    deleteNode(leafNode);
+                    parentNode->children[i] = nullptr;
+                    break;
                 }
-                leafNode = parentNode;
             }
-            break;
+            leafNode = parentNode;
         }
     }
 }
@@ -115,9 +112,9 @@ void QuadTree::insert(size_t index, const Vector2& point) {
 
 
 void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
-    // If the node is a leaf, add the index to its indices vector
+    // If the node is a leaf, add the index to its indices unordered_map
     if (!node->children[0]) {
-        node->indices.push_back(index);
+        node->indices[index] = true;
 
         // Split the node if it exceeds the maximum number of objects and the maximum level
         if (node->indices.size() > MAX_OBJECTS && node->level < MAX_LEVELS) {
@@ -132,6 +129,7 @@ void QuadTree::insertIntoChild(Node* node, int childIndex, size_t index) {
         }
     }
 }
+
 
 QuadTree::~QuadTree() {
     // Delete all nodes starting from the root
@@ -171,9 +169,9 @@ void QuadTree::QueryNearestRecursive(Node* node, const Vector2& position, int& n
 
     // Check if this node is closer than the current nearest point
     for (const auto& index : node->indices) {
-        float distance = Vector2Distance(position, world->GetPosition(index));
+        float distance = Vector2Distance(position, world->GetPosition(index.first));
         if (distance < nearestDistance) {
-            nearestIndex = index;
+            nearestIndex = index.first;
             nearestDistance = distance;
         }
     }
@@ -218,7 +216,7 @@ void QuadTree::search(const Rectangle& bounds, std::vector<size_t>& results) {
 
             // Node intersects the search bounding box, add its points to the results
             for (const auto& index : currentNode->indices) {
-                results.push_back(index);
+                results.push_back(index.first);
             }
 
             // If it's a leaf node, no need to check children

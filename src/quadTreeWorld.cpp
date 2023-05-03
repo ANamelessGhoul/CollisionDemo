@@ -8,6 +8,7 @@ QuadTreeWorld::QuadTreeWorld()
 
 QuadTreeWorld::~QuadTreeWorld()
 {
+    delete quadTree;
 }
 
 void QuadTreeWorld::CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer)
@@ -21,9 +22,13 @@ void QuadTreeWorld::OnPointMoved(size_t pointIndex, Vector2 displacement)
     // if (positions.size() <= pointIndex || Vector2LengthSqr(displacement) <= (EPSILON))
     //     return;m
 
+    if (Vector2LengthSqr(displacement) < EPSILON)
+        return;
+
     Vector2 newPoint = Vector2Add(positions[pointIndex], displacement);
 
     quadTree->remove(pointIndex, positions[pointIndex]);
     quadTree->insert(pointIndex, newPoint);
+    positions[pointIndex] = newPoint;
 }
 

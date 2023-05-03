@@ -25,12 +25,14 @@
 
 int main() 
 {
+    SetTraceLogLevel(LOG_TRACE);
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib");
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
     // World world = World{ };
     QuadTreeWorld quadTreeWorld = QuadTreeWorld();
@@ -42,7 +44,6 @@ int main()
     camera.offset = Vector2{ 0 };
 
     
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -54,7 +55,6 @@ int main()
 
         // world.UpdatePoints();
 
-        quadTreeWorld.UpdatePoints();
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -62,6 +62,9 @@ int main()
             ClearBackground(RAYWHITE);
 
             BeginMode2D(camera);
+
+                quadTreeWorld.UpdatePoints();
+
                 // world.DrawPoints();
                 quadTreeWorld.DrawPoints();
             EndMode2D();

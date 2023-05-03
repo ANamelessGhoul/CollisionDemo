@@ -6,6 +6,7 @@
 #include <cfloat>
 #include <vector>
 #include <array>
+#include <unordered_map>
 
 struct BoundingBoxCustom {
     Vector2 center;
@@ -15,10 +16,11 @@ struct BoundingBoxCustom {
 
 struct Node {
     BoundingBoxCustom bbox;
-    std::vector<size_t> indices;
+    // std::vector<size_t> indices;
     Node* parent = nullptr;
     Node* children[4];  // Initialize the children pointers to nullptr
     int level;
+    std::unordered_map<size_t, bool> indices;
 
     // Add a constructor for the Node struct
     Node() {
