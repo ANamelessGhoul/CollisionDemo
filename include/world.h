@@ -9,6 +9,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
+
 class World
 {
 private:
@@ -32,6 +33,8 @@ public:
     virtual void Draw();
     void DrawPoints();
     void UpdatePoints();
+    Vector2& GetPosition(int index);
+    int PointsSize();
     virtual void OnPointAdded(size_t pointIndex);
     virtual void OnPointMoved(size_t pointIndex, Vector2 displacement);
     virtual void CheckCollision(const Rectangle& bounds, std::vector<size_t>& buffer);

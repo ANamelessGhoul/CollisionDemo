@@ -24,17 +24,20 @@
 #include "uniformGridWorld.h"
 #include "stats.h"
 #include <memory>
+#include "quadTreeWorld.h"
 
 int main() 
 {
+    SetTraceLogLevel(LOG_TRACE);
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "raylib");
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 
-    std::unique_ptr<World> world = std::make_unique<UniformGridWorld>();
+    std::unique_ptr<World> world = std::make_unique<QuadTreeWorld>();
 
     Camera2D camera = { 0 };
     camera.zoom = 1;
@@ -49,7 +52,6 @@ int main()
     double averageQueries{};
 
     
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop

@@ -7,10 +7,16 @@ Rectangle World::GetCircleBounds(Vector2 position, float radius)
 }
 
 World::World(/* args */)
+    : screenCollisionsBuffer(),
+      collisionsBuffer()
 {
     objectCount = 0;
     srand(644939421);
     
+    positions.reserve(DESIRED_COUNT);
+    velocities.reserve(DESIRED_COUNT);
+    radiuses.reserve(DESIRED_COUNT);
+
     positions.reserve(DESIRED_COUNT);
     velocities.reserve(DESIRED_COUNT);
     radiuses.reserve(DESIRED_COUNT);
@@ -22,8 +28,19 @@ World::World(/* args */)
     }
 }
 
+
 World::~World()
 {
+}
+
+Vector2& World::GetPosition(int index)
+{
+    return positions[index];
+}
+
+int World::PointsSize()
+{
+    return positions.size();
 }
 
 void World::CreateRandomPoint()
@@ -41,8 +58,6 @@ void World::Draw()
     DrawPoints();
 }
 
-// Average -> Count
-// Sum(x) / count(x)
 
 void World::DrawPoints()
 {
@@ -62,7 +77,7 @@ void World::DrawPoints()
         Stats::GetInstance().AddTimer(timer);
         Stats::GetInstance().averageQueries.AddValue(static_cast<double>(collisionsBuffer.size()));
         bool hasCollision = false;
-        for (size_t index : collisionsBuffer)
+        for (auto index : collisionsBuffer)
         {
             // Ignore self collisions
             if (index == i)
